@@ -1,0 +1,162 @@
+________________________________________
+🏗 User Guide: StarRecombiner
+
+How it Works
+This tool acts as a bridge between your processed nebula and your raw star data. It executes native Siril commands in a temporary workspace, ensuring the mathematical result is identical to manual processing while providing a real-time, interactive environment.
+
+1. Requirements & Dependencies
+To run this script, Siril's internal Python engine needs two specific libraries that don't come standard. You must "inject" these into the Siril environment.
+
+The Components:
+1.	Python 3.x: (Included with Siril).
+2.	Pip: (Included with Siril).
+3.	pysiril: The bridge that sends PixelMath commands to Siril.
+4.	Pillow (PIL): The engine that displays your image previews.
+
+Note on Python Libraries: StarRecombiner utilizes pysiril to maintain a "direct-line" connection with Siril. While your system may also show sirilpy, they are distinct frameworks. Pysiril is specifically used here because it is optimized for real-time interaction; it allows the script to "shout" commands to Siril instantly as you move sliders, ensuring the live preview remains responsive without the connection overhead found in other libraries.
+
+
+
+2. Installation Steps (Host PC)
+
+The script features an automated installer. 
+On first launch, it will attempt to download and inject thepysiril and Pillow libraries for you. If the console reports an error, follow these manual steps.
+
+Replace "Tony" with your Windows username.
+
+
+# 1. Create the fix folder
+
+In Windows, open PowerShell as Admin.
+
+
+New-Item -ItemType Directory -Force -Path "C:\siril_fix"
+
+# 2. Download pysiril (GitLab Stable)
+Invoke-WebRequest -Uri "https://gitlab.com/-/project/20510105/uploads/8224707c29669f255ad43da3b93bc5ec/pysiril-0.0.15-py3-none-any.whl" -OutFile "C:\siril_fix\pysiril-0.0.15-py3-none-any.whl"
+
+# 3. Download Pillow (Python 3.12 Stable Hash)
+Invoke-WebRequest -Uri "https://files.pythonhosted.org/packages/08/5c/2104299949b9d504baf3f4d35f73dbd14ef31bbd1ddc2c1b66a5b7dfda44/pillow-11.1.0-cp312-cp312-win_amd64.whl" -OutFile "C:\siril_fix\pillow-11.1.0-cp312-cp312-win_amd64.whl"
+
+# 4. Inject into Siril
+C:\Users\Tony\AppData\Local\siril\venv\Scripts\python.exe -m pip install "C:\siril_fix\pysiril-0.0.15-py3-none-any.whl" "C:\siril_fix\pillow-11.1.0-cp312-cp312-win_amd64.whl"
+
+
+# 5. Verify Libraries: Since you just ran the manual pip install, run this in PowerShell to be 100% sure:
+PowerShell
+C:\Users\Tony\AppData\Local\siril\venv\Scripts\python.exe -m pip list
+
+Look for Pillow and pysiril (or pySiril) in the list.
+
+C:\Users\tony\AppData\Local\siril\venv\Scripts\python.exe -m pip list
+Package            Version
+------------------ --------
+certifi            2026.1.4
+charset-normalizer 3.4.4
+idna               3.11
+numpy              2.4.1
+packaging          26.0
+pillow             11.1.0
+pip                25.3
+pypiwin32          223
+pysiril            0.0.15
+pywin32            311
+requests           2.32.5
+sirilpy            1.0.10
+urllib3            2.6.3
+
+
+Note on Python Libraries: StarRecombiner utilizes pysiril to maintain a "direct-line" connection with Siril. While your system may also show sirilpy, they are distinct frameworks. Pysiril is specifically used here because it is optimized for real-time interaction; it allows the script to "shout" commands to Siril instantly as you move sliders, ensuring the live preview remains responsive without the connection overhead found in other libraries.
+
+
+3. Placing & Launching the Script
+The script must be placed in Siril's designated search path to appear in the menu:
+•	Path: C:\Users\Tony\AppData\Roaming\siril\scripts\
+•	File Name: StarRecombiner.py (or your preferred version name).
+•	To Launch: Inside Siril, go to Scripts ➔ Python Scripts ➔ Scripts ➔ StarRecombiner.
+
+Sometimes users place the script while Siril is open and then can't find it.
+If Siril is already open, you must go to Scripts -> Refresh Scripts before StarRecombiner will appear in the menu.
+
+
+________________________________________
+🚀 Launching the Tool
+1.	Open Siril.
+2.	Go to Scripts ➔ Python Scripts ➔ StarRecombiner.py
+3.	The console should stay quiet (no "Libraries missing" message) and the UI should pop up.
+
+
+
+________________________________________
+🕒 When to Use This Script 
+
+For the best results, use this script at the final recombination stage of your processing chain.
+
+The Standard 4-Step Workflow:
+1.	Linear Processing & Star Removal: Use StarNet to create two files: a Starless Nebula and a Star Mask.
+2.	Nebula Stretching (Manual): Process your Starless nebula independently. Stretch it, enhance faint dust, and apply noise reduction. Save as your "Base Starless" FITS.
+3.	Do not stretch the Star Mask
+4.	The Recombination: Open StarRecombiner.py to bring your Linear Star Mask and Processed Starless Nebula together.
+o	Why here? It allows you to stretch stars to perfectly match the intensity of your enhanced nebula without "bloating" them or losing their color.
+5.	Final Polish: Take the recombined_final.fits back into Siril or Photoshop for final cropping, color tweaks, and sharpening.
+
+________________________________________
+🔍 Navigation & Inspection
+•	Automatic Sync: The "Load" dialogs default to your current Siril working directory, making it easy to grab your project files.
+•	Mouse Wheel: Scroll up to zoom in and down to zoom out.
+•	Left Click + Drag: Move the image (pan) while zoomed in to inspect star profiles in the corners or fine detail.
+•	Fit Button: Instantly resets the view to fit your window size.
+________________________________________
+Detailed Settings Guide
+1. Asinh Stretch Factor
+•	Native Command: asinh [factor] [blackpoint]
+•	Purpose: Stretches stars while maintaining color saturation. Prevents stars from becoming flat white discs.
+•	Tip: Higher values "lift" the stars out of the dark.
+2. Asinh Black Point
+•	Purpose: Clips the background of the starmask to pure black.
+•	Tip: If you see a "haze" over your nebula, increase this slightly. It ensures the formula doesn't add light to your nebula's background.
+3. Star Saturation
+•	Native Command: satu [amount] [background]
+•	Purpose: Intensifies the natural colors (reds, blues, yellows) of the stars.
+•	Tip: After stretching, stars can look pale. Use this to make the star colors pop.
+4. Histogram Midtones
+•	Native Command: mtf 0.0 [midtones] 1.0
+•	Purpose: Controls the brightness curve of the stars.
+•	Tip: Slide to the left (lower values) to make stars appear brighter and more significant.
+5. Gaussian Blur
+•	Native Command: gauss [sigma]
+•	Purpose: Softens the star edges.
+•	Tip: Use 0.3 to 1.0 for a natural look that blends smoothly into the nebula.
+
+________________________________________
+Pixel Math: The Screen Formula
+
+
+The script uses the formula: 
+1 - (1 - StarMask) * (1 - Starless)
+
+This formula us the exact same operation in PixelMath as using:   ~((~StarMask)*(~Starless))
+
+The script inverts both images, multiplies them together, and then inverts the result again. This method leverages the properties of the screen function to create a bright and vibrant combined image, where the bright areas of both images are preserved and enhanced.
+Unlike simple addition, this "Screens" the stars onto the image. This means even if a star is placed on a bright part of a nebula, the resulting pixel will never exceed 1.0 (white), avoiding ugly "clipping" artifacts and preserving the nebula detail behind the star.
+
+________________________________________
+Saving Your Work
+The script identifies the folder where your Starless image is stored and saves all outputs there automatically:
+•	SAVE FINAL FITS: Saves as recombined_final.fits. This is a full 32-bit FITS file, preserving all data depth.
+•	SAVE WEB JPG: Saves as recombined_web.jpg. This is a high-quality 8-bit version ready for social media.
+
+________________________________________
+Comparison & Troubleshooting
+•	Hold to Compare: Use this to toggle between your original nebula and the version with stars to judge if the stars are too bright or obscuring detail.
+•	Command Log: Shows live communication with Siril. If a command like satu fails, check here to verify your Siril version's compatibility.
+
+
+
+User Guide Addendum: VMware Performance
+If you are running this in a VMware Workstation Windows Guest, here are two "Quality of Life" tips for this specific script:
+•	The 700ms Delay: In the script, self.root.after(700, self.process_image) handles the "debounce." If the preview feels laggy inside the VM because of virtualized CPU overhead, you can change 700 to 1000 to give the VM more breathing room between slider moves.
+•	Virtual Disk I/O: Siril writes temporary FITS files during PixelMath. If the script feels slow, ensure your Siril "Working Directory" is set to a folder on the Virtual C: Drive rather than a VMware Shared Folder (Z:), as virtual network drives are significantly slower for image processing.
+________________________________________
+
+
