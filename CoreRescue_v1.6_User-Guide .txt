@@ -1,0 +1,147 @@
+
+# 🏗 User Guide: CoreRescue v1.6
+
+### Specialized HDR Nebula Sculptor
+
+**How it Works**
+This tool is a specialized High Dynamic Range (HDR) blender. It allows you to perform two simultaneous stretches on a single linear FITS file: one gentle, color-safe stretch to preserve bright core details (like the Trapezium in M42) and one aggressive stretch to reveal faint outer nebulosity. It then uses a Luminosity Mask to seamlessly blend them together.
+
+---
+
+### 1. Requirements & Dependencies
+
+CoreRescue requires a "bridge" between the UI and Siril's processing engine:
+
+1. **Python 3.x & Pip:** (Included with Siril's internal environment).
+2. **pysiril:** The engine that sends HDR PixelMath commands to Siril.
+3. **Pillow (PIL):** The engine that renders your HDR previews on screen.
+
+**Note on Python Libraries:** CoreRescue utilizes *pysiril* to maintain a "direct-line" connection with Siril. This ensures that as you adjust sliders, the blend updates in near real-time.
+
+---
+
+### 2. Installation Steps (Host PC)
+
+The script features an **Automated Magic Installer**. On first launch, it will attempt to download and inject the libraries for you. If the console reports an error, use the manual steps below.
+
+**Manual Failsafe (PowerShell Admin)**
+*Replace "Tony" with your Windows username.*
+
+1. **Create the fix folder:**
+`New-Item -ItemType Directory -Force -Path "C:\siril_fix"`
+2. **Download pysiril:**
+`Invoke-WebRequest -Uri "https://gitlab.com/-/project/20510105/uploads/8224707c29669f255ad43da3b93bc5ec/pysiril-0.0.15-py3-none-any.whl" -OutFile "C:\siril_fix\pysiril-0.0.15-py3-none-any.whl"`
+3. **Download Pillow:**
+`Invoke-WebRequest -Uri "https://files.pythonhosted.org/packages/08/5c/2104299949b9d504baf3f4d35f73dbd14ef31bbd1ddc2c1b66a5b7dfda44/pillow-11.1.0-cp312-cp312-win_amd64.whl" -OutFile "C:\siril_fix\pillow-11.1.0-cp312-cp312-win_amd64.whl"`
+4. **Inject into Siril:**
+`C:\Users\Tony\AppData\Local\siril\venv\Scripts\python.exe -m pip install "C:\siril_fix\pysiril-0.0.15-py3-none-any.whl" "C:\siril_fix\pillow-11.1.0-cp312-cp312-win_amd64.whl"`
+
+---
+
+### 3. Placing & Launching
+
+*Replace "Tony" with your Windows username.*
+
+* **Path:** `C:\Users\Tony\AppData\Roaming\siril\scripts\`
+* **To Launch:** Inside Siril, go to **Scripts ➔ Python Scripts ➔ CoreRescue**.
+* **Tip:** If you just added the file, remember to hit **Scripts ➔ Refresh Scripts** in Siril.
+
+---
+
+### 🕒 When to Use This Script
+
+This script **must** be used on **Linear (Unstretched) data**.
+
+1. **Pre-processing:** Perform Stacking, Background Extraction, and Color Calibration (SPCC) in Siril.
+2. **CoreRescue:** Load your calibrated Linear FITS.
+3. **Final Polish:** Save as `HDR_Rescued.fits` and return to Siril/Photoshop for final curves and sharpening.
+
+---
+
+### ⚙️ Detailed Settings Guide
+
+#### **CORE CONTROLS (Orange)**
+
+**1. Core Stretch (-) >> Brighter**
+
+* **Logic:** Uses **asinh**. Color-safe; brightens without washing out stars.
+* **Goal:** Keep stars sharp (e.g., Trapezium) rather than a white blob.
+
+**2. Core Black Point (-) >> Darker**
+
+* **Goal:** Sets the floor for the core. Nudge up if the core feels "hazy."
+
+**3. Core Saturation (-) >> More**
+
+* **Tip:** If the HDR blend looks "pasty," push this to 1.5 or 2.0 to make colors pop.
+
+#### **NEBULA CONTROLS (Blue)**
+
+**4. Nebula Stretch (-) >> Brighter**
+
+* **Logic:** Uses **MTF (Midtone Transformation)** on a **Logarithmic Scale**.
+* **Why:** This is the "heavy lifter" for faint data. Moving the slider **Right** pulls more light out.
+
+**5. Nebula BP (Fine) (-) >> Darker**
+
+* **Logic:** Uses **Quadratic Scaling** for surgical precision.
+* **Tip:** Use this to darken the background sky. The first 50% of the slider is ultra-sensitive for fine-tuning.
+
+#### **BLEND CONTROLS (Green)**
+
+**6. Blend Feathering (-) >> Softer**
+
+* **Purpose:** Controls the **Gaussian Blur** of the luminosity mask.
+* **Tip:** If you see a visible "seam" between the core and nebula, increase this.
+
+---
+
+### 📖 Navigation & Inspection
+
+**View Inspector Modes:**
+
+* **Blend (Default):** The final HDR result.
+* **Core Only:** Check if the core stars are sharp and colorful.
+* **Nebula Only:** Judge if you've pulled enough faint dust.
+* **Mask Map:** White areas = Core layer; Black areas = Nebula layer.
+
+---
+
+### ➗ The HDR Formula (PixelMath)
+
+The script creates a Luminosity Mask from your core stretch and uses it to choose which pixels to display:
+
+**Nebula * (1 - Mask) + (Core * Mask)**
+
+* **The Mask:** A grayscale map where the core is white (1.0) and the background is black (0.0).
+* **(1 - Mask):** Targets the black areas, telling Siril to show the high-detail Nebula layer.
+* **The Result:** By blurring the mask (Feathering), Siril calculates a smooth weighted average in the transition zones.
+
+---
+
+### 💾 Saving & Performance
+
+* **SAVE HDR FITS:** Saves a 32-bit `HDR_Rescued.fits` to your source folder.
+* **Performance:** Every slider move processes temporary FITS files. Ensure your working directory is on an **SSD**.
+* **Reset All:** Instantly returns all sliders to neutral positions.
+
+---
+
+### 📖 Workflow Strategy: CoreRescue vs. HDR Multiscale
+
+**1. The Core Differences**
+
+* **Workflow Timing:** CoreRescue is a **Linear Tool** (used at the beginning). HDR Multiscale is a **Post-Stretch Tool**.
+* **The Technology:** CoreRescue uses Dual-Path Masking. HDR Multiscale uses Wavelet Decomposition (detail sizes).
+* **Color Preservation:** CoreRescue uses `asinh` to keep stars from turning white.
+
+**2. The "Golden Path" Workflow**
+To get the best possible result on M42 or M31, use both tools in this order:
+
+* **Step A (CoreRescue):** Load Linear FITS. Perform the "Big Stretch." Protect the core stars while revealing the outer nebula. Save `HDR_Rescued.fits`.
+* **Step B (Standard Polish):** Open in Siril. Apply noise reduction and color calibration if not already done.
+* **Step C (HDR Multiscale):** Run the HDR Multiscale script. Because CoreRescue already "saved" the highlights, Multiscale can now sharpen fine filaments of dust without blowing the core out.
+
+---
+
+Would you like me to create a separate "Quick Start" checklist version of this for users who want a 30-second summary?
