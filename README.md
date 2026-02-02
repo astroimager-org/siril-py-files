@@ -17,7 +17,7 @@ Credits & Acknowledgments
 These tools were developed to bridge the gap between complex mathematical processing and an intuitive user experience.
 
 Lead Developer: Tony B. (TB)
-AI Architecture & Optimization: Gemini (Google DeepMind)
+AI Architecture & Optimization
 
 Core Math & Logic: Based on Siril's powerful PixelMath and asinh implementation.
 Special Thanks: * Cyril Richard and the Siril team for the pySiril library.
